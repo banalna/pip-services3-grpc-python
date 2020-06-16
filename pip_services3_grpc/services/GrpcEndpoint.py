@@ -175,13 +175,13 @@ class GrpcEndpoint(IOpenable, IConfigurable, IReferenceable):
                 ssl_key_file = connection.get_as_nullable_string('ssl_key_file')
                 ssl_crt_file = connection.get_as_nullable_string('ssl_crt_file')
 
-                with open(ssl_key_file, 'rb', encoding='utf-8') as file:
+                with open(ssl_key_file, 'rb') as file:
                     private_key = file.read()
 
-                with open(ssl_crt_file, 'rb', encoding='utf-8') as file:
+                with open(ssl_crt_file, 'rb') as file:
                     certificate = file.read()
 
-                credentials = grpc.ssl_server_credentials((private_key, certificate))
+                credentials = grpc.ssl_server_credentials(((private_key, certificate),))
 
             # Create instance of express application
             if len(self.__interceptors) > 0:

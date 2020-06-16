@@ -161,7 +161,7 @@ class GrpcClient(IOpenable, IReferenceable, IConfigurable):
 
             if connection.get_protocol('http') == 'https':
                 ssl_ca_file = connection.get_as_nullable_string('ssl_ca_file')
-                with open(ssl_ca_file, 'rb', encoding='utf-8') as file:
+                with open(ssl_ca_file, 'rb') as file:
                     trusted_root = file.read()
                 credentials = grpc.ssl_channel_credentials(trusted_root)
                 channel = grpc.secure_channel(str(connection.get_host()) + ':' +
