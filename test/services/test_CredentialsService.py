@@ -139,3 +139,6 @@ class TestCredentialsDummyGrpcService:
         assert dummy.id is ''
         assert dummy.key is ''
         assert dummy.content is ''
+
+        # Check interceptor
+        assert self.service.get_number_of_calls() == 7

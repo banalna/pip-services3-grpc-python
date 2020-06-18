@@ -71,3 +71,5 @@ class TestCredentialsDummyGrpcClient:
 
     def test_crud_operations(self):
         self.fixture.test_crud_operations()
+        # Check interceptor
+        assert self.service.get_number_of_calls() == 6
