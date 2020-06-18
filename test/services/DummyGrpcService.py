@@ -26,9 +26,19 @@ from pip_services3_grpc.services.GrpcService import GrpcService
 from ..IDummyController import IDummyController
 
 
+class _RequestInterceptor(grpc.ServerInterceptor):
+
+    def __init__(self):
+        self.number_of_calls = 0
+
+    def intercept_service(self, continuation, handler_call_details):
+        self.number_of_calls += 1
+        return continuation(handler_call_details)
+
+
 class DummyGrpcService(GrpcService, dummies_pb2_grpc.DummiesServicer):
     __controller = None
-    __number_of_calls = 0
+    interceptor = None
 
     def add_servicer_to_server(self, server):
         dummies_pb2_grpc.add_DummiesServicer_to_server(self, server)
@@ -38,20 +48,20 @@ class DummyGrpcService(GrpcService, dummies_pb2_grpc.DummiesServicer):
         super().__init__(self.service_name)
         self._dependency_resolver.put('controller',
                                       Descriptor('pip-services-dummies', 'controller', 'default', '*', '*'))
+        self.interceptor = _RequestInterceptor()
 
     def set_references(self, references):
         super().set_references(references)
         self.__controller = self._dependency_resolver.get_one_required('controller')
 
     def get_number_of_calls(self):
-        return self.__number_of_calls
+        return self.interceptor.number_of_calls
 
-    def __increment_number_of_calls(self, request, method):
-        self.__number_of_calls += 1
-        return None
+    def __increment_number_of_calls(self):
+        return self.interceptor
 
     def register(self):
-        self._register_interceptor(self.__increment_number_of_calls)
+        self._register_interceptor(self.__increment_number_of_calls())
         self._register_service(self)
 
     def create_dummy(self, request, context):

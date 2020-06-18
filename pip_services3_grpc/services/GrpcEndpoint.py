@@ -73,7 +73,7 @@ class GrpcEndpoint(IOpenable, IConfigurable, IReferenceable):
     - discovery: <code>"\*:discovery:\*:\*:1.0"</code> (for the connection resolver).
 
     ### Examples ###
-        TODO!!!
+        TODO: description
 
     """
 
@@ -184,12 +184,15 @@ class GrpcEndpoint(IOpenable, IConfigurable, IReferenceable):
                 credentials = grpc.ssl_server_credentials(((private_key, certificate),))
 
             # Create instance of express application
-            if len(self.__interceptors) > 0:
-                self.__server = grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers),
-                                            interceptors=self.__interceptors)
-            else:
-                self.__server = grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers))
+            # TODO: check this realization
+            self.__server = lambda interceptors: grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers),
+                                                             interceptors=interceptors) if len(
+                interceptors) > 0 else grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers))
 
+            self.__perform_registrations()
+
+            if callable(self.__server):
+                self.__server = self.__server(self.__interceptors)
             if credentials:
                 self.__server.add_secure_port(str(connection.get_host()) + ':' +
                                               str(connection.get_port()), credentials)
@@ -198,7 +201,7 @@ class GrpcEndpoint(IOpenable, IConfigurable, IReferenceable):
             # Start operations
             self.__server.start()
             self.__connection_resolver.register(correlation_id)
-            self.__perform_registrations()
+
             self.__logger.debug(correlation_id, 'Opened GRPC service at {}'.format(self.__uri))
 
         except Exception as ex:
@@ -343,6 +346,7 @@ class GrpcEndpoint(IOpenable, IConfigurable, IReferenceable):
         Registers a service with related implementation
         :param service: a GRPC service object.
         """
+        self.__server = self.__server(self.__interceptors)
         service.add_servicer_to_server(self.__server)
 
     def register_commandable_method(self, method, schema, action):
