@@ -29,19 +29,15 @@ class CommandableGrpcService(GrpcService, ABC):
             command = commands[index]
             method = '' + self.__name + '.' + command.get_name()
 
-            def inner(correlation_id, args, getted_method):
-                for _index in range(0, len(commands)):
-                    _command = commands[_index]
-                    _method = '' + self.__name + '.' + _command.get_name()
-                    if getted_method == _method:
-                        timing = self._instrument(correlation_id, _method)
-
-                        try:
-                            result = _command.execute(correlation_id, args)
-                            timing.end_timing()
-                            return result
-                        except Exception as ex:
-                            timing.end_timing()
-                            self._instrument_error(correlation_id, _method, ex, True)
+            def inner(correlation_id, args, _method):
+                _command = controller.get_command_set().find_command(_method.split('.')[-1])
+                timing = self._instrument(correlation_id, _method)
+                try:
+                    result = _command.execute(correlation_id, args)
+                    timing.end_timing()
+                    return result
+                except Exception as ex:
+                    timing.end_timing()
+                    self._instrument_error(correlation_id, _method, ex, True)
 
             self.register_commadable_method(method, None, inner)
